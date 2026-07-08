@@ -222,7 +222,7 @@ function TagDetails() {
         );
       case 'ReferredBy':
         const allReferrers = uniqBy(
-          [...(selectedManifest?.referrers || []), ...(imageDetailData?.referrers || [])],
+          [...(imageDetailData?.referrers || []), ...(selectedManifest?.referrers || [])],
           'digest'
         );
 

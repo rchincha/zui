@@ -915,6 +915,49 @@ describe('Tags details', () => {
     await waitFor(() => expect(screen.getAllByRole('tab')).toHaveLength(5));
   });
 
+  it('should prefer image referrer details when digest duplicates exist', async () => {
+    const duplicateDigest = 'sha256:duplicate-referrer';
+    const mockImageWithDuplicateReferrers = {
+      Image: {
+        ...mockImage.Image,
+        Referrers: [
+          {
+            MediaType: 'application/vnd.oci.artifact.manifest.v1+json',
+            ArtifactType: 'application/vnd.example.signature',
+            Size: 466,
+            Digest: duplicateDigest,
+            Annotations: [{ Key: 'source', Value: 'image' }]
+          }
+        ],
+        Manifests: [
+          {
+            ...mockImage.Image.Manifests[0],
+            Referrers: [
+              {
+                MediaType: 'application/vnd.oci.artifact.manifest.v1+json',
+                Size: 466,
+                Digest: duplicateDigest
+              }
+            ]
+          },
+          ...mockImage.Image.Manifests.slice(1)
+        ]
+      }
+    };
+
+    jest.spyOn(api, 'get').mockResolvedValueOnce({ status: 200, data: { data: mockImageWithDuplicateReferrers } });
+    render(<TagDetailsThemeWrapper />);
+
+    const referrersTab = await screen.findByText(/referred by/i);
+    fireEvent.click(referrersTab);
+
+    expect(await screen.findByText(/Type: application\/vnd\.example\.signature/i)).toBeInTheDocument();
+
+    const annotationsToggle = (await screen.findAllByText(/ANNOTATIONS/i))[0];
+    await userEvent.click(annotationsToggle);
+    expect(await screen.findByText(/source: image/i)).toBeInTheDocument();
+  });
+
   it("should log an error when data can't be fetched", async () => {
     jest.spyOn(api, 'get').mockRejectedValue({ status: 500, data: {} });
     const error = jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -1038,7 +1081,7 @@ describe('Tags details', () => {
     render(<TagDetailsThemeWrapper />);
     const dropdown = await screen.findByText(`Pull ${mockImage.Image.RepoName}:${mockImage.Image.Tag}`);
     expect(dropdown).toBeInTheDocument();
-    userEvent.click(dropdown);
+    await userEvent.click(dropdown);
     await waitFor(() => expect(screen.queryAllByTestId('pull-menuItem')).toHaveLength(1));
     fireEvent.click(await screen.findByTestId('pullcopy-btn'));
     await waitFor(() =>
@@ -1046,7 +1089,7 @@ describe('Tags details', () => {
         `docker pull localhost/${mockImage.Image.RepoName}:${mockImage.Image.Tag}`
       )
     );
-    userEvent.click(dropdown);
+    await userEvent.click(dropdown);
   });
 
   it('should copy the podman pull string to clipboard', async () => {
@@ -1054,10 +1097,10 @@ describe('Tags details', () => {
     render(<TagDetailsThemeWrapper />);
     const dropdown = await screen.findByText(`Pull ${mockImage.Image.RepoName}:${mockImage.Image.Tag}`);
     expect(dropdown).toBeInTheDocument();
-    userEvent.click(dropdown);
+    await userEvent.click(dropdown);
     await waitFor(() => expect(screen.queryAllByTestId('pull-menuItem')).toHaveLength(1));
     const podmanTab = await screen.findByText('Podman');
-    userEvent.click(podmanTab);
+    await userEvent.click(podmanTab);
     fireEvent.click(await screen.findByTestId('podmanPullcopy-btn'));
     await waitFor(() =>
       expect(mockCopyToClipboard).toHaveBeenCalledWith(
@@ -1071,10 +1114,10 @@ describe('Tags details', () => {
     render(<TagDetailsThemeWrapper />);
     const dropdown = await screen.findByText(`Pull ${mockImage.Image.RepoName}:${mockImage.Image.Tag}`);
     expect(dropdown).toBeInTheDocument();
-    userEvent.click(dropdown);
+    await userEvent.click(dropdown);
     await waitFor(() => expect(screen.queryAllByTestId('pull-menuItem')).toHaveLength(1));
     const skopeoTab = await screen.findByText('Skopeo');
-    userEvent.click(skopeoTab);
+    await userEvent.click(skopeoTab);
     fireEvent.click(await screen.findByTestId('skopeoPullcopy-btn'));
     await waitFor(() =>
       expect(mockCopyToClipboard).toHaveBeenCalledWith(
@@ -1088,7 +1131,7 @@ describe('Tags details', () => {
     render(<TagDetailsThemeWrapper />);
     const dropdown = await screen.findByText(`Pull ${mockImage.Image.RepoName}:${mockImage.Image.Tag}`);
     expect(dropdown).toBeInTheDocument();
-    userEvent.click(dropdown);
+    await userEvent.click(dropdown);
     await waitFor(() => expect(screen.queryAllByTestId('pull-menuItem')).toHaveLength(1));
     const podmanTab = await screen.findByText('Podman');
     await userEvent.click(podmanTab);
@@ -1152,7 +1195,7 @@ describe('Artifact tag details', () => {
     const dropdown = await screen.findByText(
       `Pull ${mockArtifactImage.Image.RepoName}:${mockArtifactImage.Image.Tag}`
     );
-    userEvent.click(dropdown);
+    await userEvent.click(dropdown);
     await waitFor(() => expect(screen.queryAllByTestId('pull-menuItem')).toHaveLength(1));
     expect(await screen.findByText('ORAS')).toBeInTheDocument();
   });
@@ -1163,7 +1206,7 @@ describe('Artifact tag details', () => {
     const dropdown = await screen.findByText(
       `Pull ${mockArtifactImage.Image.RepoName}:${mockArtifactImage.Image.Tag}`
     );
-    userEvent.click(dropdown);
+    await userEvent.click(dropdown);
     await waitFor(() => expect(screen.queryAllByTestId('pull-menuItem')).toHaveLength(1));
     fireEvent.click(await screen.findByTestId('orasPullcopy-btn'));
     await waitFor(() =>

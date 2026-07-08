@@ -66,7 +66,7 @@ describe('Layers page', () => {
 });
 
 describe('Artifact files display', () => {
-  it('renders "Artifact Files" title for artifact manifests', async () => {
+  it('renders artifact files metadata for artifact manifests', async () => {
     render(
       <HistoryLayers
         name="hello-artifact:v1"
@@ -75,42 +75,10 @@ describe('Artifact files display', () => {
         layers={mockArtifactLayers}
       />
     );
+
     expect(await screen.findByText('Artifact Files')).toBeInTheDocument();
-  });
-
-  it('renders artifact file cards for artifact manifests', async () => {
-    render(
-      <HistoryLayers
-        name="hello-artifact:v1"
-        history={[]}
-        artifactType="application/vnd.acme.rocket.config"
-        layers={mockArtifactLayers}
-      />
-    );
     expect(await screen.findAllByTestId('artifact-file-card')).toHaveLength(2);
-  });
-
-  it('shows artifact file title from org.opencontainers.image.title annotation', async () => {
-    render(
-      <HistoryLayers
-        name="hello-artifact:v1"
-        history={[]}
-        artifactType="application/vnd.acme.rocket.config"
-        layers={mockArtifactLayers}
-      />
-    );
     expect(await screen.findByText('artifact.txt')).toBeInTheDocument();
-  });
-
-  it('shows media type for each artifact file', async () => {
-    render(
-      <HistoryLayers
-        name="hello-artifact:v1"
-        history={[]}
-        artifactType="application/vnd.acme.rocket.config"
-        layers={mockArtifactLayers}
-      />
-    );
     expect(await screen.findByText('text/plain')).toBeInTheDocument();
   });
 
